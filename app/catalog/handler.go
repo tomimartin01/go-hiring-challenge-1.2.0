@@ -35,14 +35,24 @@ func NewCatalogHandler(r models.ProductsRepositoryInterface) *CatalogHandler {
 }
 
 func (h *CatalogHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
-
-	filters := &filters.PaginationFilter{}
-	if err := filters.Parse(r.URL.Query()); err != nil {
+	pageFilters := &filters.PaginationFilter{}
+	if err := pageFilters.Parse(r.URL.Query()); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	categoryFilters := &filters.CategoryFilter{}
+	if err := categoryFilters.Parse(r.URL.Query()); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	res, total, err := h.repo.GetAllProducts(filters)
+	productFilters := &filters.ProductFilter{}
+	if err := productFilters.Parse(r.URL.Query()); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	res, total, err := h.repo.GetAllProducts(pageFilters, categoryFilters, productFilters)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
