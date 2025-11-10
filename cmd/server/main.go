@@ -50,7 +50,7 @@ func main() {
 	mux.HandleFunc("GET /catalog/{code}", cat.HandleGetProductDetails)
 
 	// Categories handlers
-	mux.HandleFunc("CREATE /categories", category.HandleCreate)
+	mux.HandleFunc("POST /categories", category.HandleCreate)
 	mux.HandleFunc("GET /categories", category.HandleGet)
 
 	// Set up the HTTP server

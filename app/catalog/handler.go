@@ -1,10 +1,9 @@
 package catalog
 
 import (
-	"encoding/json"
-	"fmt"
 	"net/http"
 
+	"github.com/mytheresa/go-hiring-challenge/app/api"
 	"github.com/mytheresa/go-hiring-challenge/app/filters"
 	"github.com/mytheresa/go-hiring-challenge/models"
 )
@@ -46,6 +45,10 @@ type CatalogHandler struct {
 	repo models.ProductsRepositoryInterface
 }
 
+const (
+	prodCodeSubPath = "code"
+)
+
 func NewCatalogHandler(r models.ProductsRepositoryInterface) *CatalogHandler {
 	return &CatalogHandler{
 		repo: r,
@@ -55,30 +58,60 @@ func NewCatalogHandler(r models.ProductsRepositoryInterface) *CatalogHandler {
 func (h *CatalogHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
 	pageFilters := &filters.PaginationFilter{}
 	if err := pageFilters.Parse(r.URL.Query()); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		api.ErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
+
 	}
+
 	categoryFilters := &filters.CategoryFilter{}
 	if err := categoryFilters.Parse(r.URL.Query()); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		api.ErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	productFilters := &filters.ProductFilter{}
 	if err := productFilters.Parse(r.URL.Query()); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		api.ErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	res, total, err := h.repo.GetAllProducts(pageFilters, categoryFilters, productFilters)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		api.ErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	// Map response
-	products := make([]Product, len(res))
-	for i, p := range res {
+	response := Response{
+		Products: mapToProducts(res),
+		Total:    total,
+	}
+
+	api.OKResponse(w, response)
+}
+
+func (h *CatalogHandler) HandleGetProductDetails(w http.ResponseWriter, r *http.Request) {
+	productCode := r.PathValue(prodCodeSubPath)
+	if productCode == "" {
+		api.ErrorResponse(w, http.StatusBadRequest, "Product code is required")
+		return
+	}
+
+	product, err := h.repo.GetProductDetails(productCode)
+	if err != nil {
+		api.ErrorResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	response := ProductDetailsResponse{
+		Product: mapToProductDetails(product),
+	}
+
+	api.OKResponse(w, response)
+}
+
+func mapToProducts(modelsProducts []models.Product) []Product {
+	products := make([]Product, len(modelsProducts))
+	for i, p := range modelsProducts {
 		categories := make([]Category, len(p.Categories))
 		for j, c := range p.Categories {
 			categories[j] = Category{
@@ -92,39 +125,15 @@ func (h *CatalogHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
 			Price:      p.Price.InexactFloat64(),
 		}
 	}
-
-	// Return the products as a JSON response
-	w.Header().Set("Content-Type", "application/json")
-
-	response := Response{
-		Products: products,
-		Total:    total,
-	}
-
-	if err := json.NewEncoder(w).Encode(response); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	return products
 }
 
-func (h *CatalogHandler) HandleGetProductDetails(w http.ResponseWriter, r *http.Request) {
-	productCode := r.PathValue("code")
-	if productCode == "" {
-		http.Error(w, "Product code is required", http.StatusBadRequest)
-		return
-	}
-
-	product, err := h.repo.GetProductDetails(productCode)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
+func mapToProductDetails(product models.Product) ProductDetails {
 	variants := make([]Variant, len(product.Variants))
 	for i, variant := range product.Variants {
 		variants[i] = Variant{
-			Code: variant.SKU,
-			Name: variant.Name,
+			Code:  variant.SKU,
+			Name:  variant.Name,
 			Price: product.Price.InexactFloat64(),
 		}
 		// We need to inherit the price from the product
@@ -132,6 +141,7 @@ func (h *CatalogHandler) HandleGetProductDetails(w http.ResponseWriter, r *http.
 			variants[i].Price = product.Price.InexactFloat64()
 		}
 	}
+
 	categories := make([]Category, len(product.Categories))
 	for i, category := range product.Categories {
 		categories[i] = Category{
@@ -139,25 +149,11 @@ func (h *CatalogHandler) HandleGetProductDetails(w http.ResponseWriter, r *http.
 			Name: category.Name,
 		}
 	}
-	productDetails := ProductDetails{
+
+	return ProductDetails{
 		Code:       product.Code,
 		Categories: categories,
 		Price:      product.Price.InexactFloat64(),
 		Variants:   variants,
 	}
-
-	response := ProductDetailsResponse{
-		Product: productDetails,
-	}
-
-	// Return the products as a JSON response
-	w.Header().Set("Content-Type", "application/json")
-
-	fmt.Println(product)
-
-	if err := json.NewEncoder(w).Encode(response); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
 }

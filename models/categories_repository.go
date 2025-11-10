@@ -26,7 +26,7 @@ func (r CategoryRepository) Create(dto CategoryDto) (Category, error) {
 	}
 
 	result := r.db.FirstOrCreate(&newCategory, Category{Code: newCategory.Code})
-	if result != nil {
+	if result.Error != nil {
 		return Category{}, result.Error
 	}
 

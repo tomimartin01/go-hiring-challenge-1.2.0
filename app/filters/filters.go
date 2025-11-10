@@ -17,7 +17,6 @@ const (
 	limitParamName         = "limit"
 	categoryNameParamName  = "category_name"
 	priceLessThanParamName = "price_less_than"
-	productCodeParamName   = "product_code"
 	ErrInvalidParamValue   = "INVALID_PARAM_VALUE"
 )
 

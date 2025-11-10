@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/mytheresa/go-hiring-challenge/app/api"
 	"github.com/mytheresa/go-hiring-challenge/models"
 )
 
 type Category struct {
+	ID   uint   `json:"id"`
 	Code string `json:"code"`
 	Name string `json:"name"`
 }
@@ -32,32 +34,30 @@ func (h CategoryHandler) HandleCreate(w http.ResponseWriter, r *http.Request) {
 	var req CreateRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		api.ErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	categoryDto := models.NewCategoryToCreate(req.Code, req.Name)
 	newCategory, err := h.repo.Create(categoryDto)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		api.ErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	res := Category{
+		ID:   newCategory.ID,
 		Code: newCategory.Code,
 		Name: newCategory.Name,
 	}
 
-	if err := json.NewEncoder(w).Encode(res); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	api.OKResponse(w, res)
 }
 
 func (h CategoryHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
 	res, err := h.repo.GetAllCategories()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		api.ErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -69,8 +69,5 @@ func (h CategoryHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if err := json.NewEncoder(w).Encode(categories); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	api.OKResponse(w, categories)
 }
