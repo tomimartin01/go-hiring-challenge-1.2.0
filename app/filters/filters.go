@@ -9,15 +9,16 @@ import (
 )
 
 const (
-	minLimitValue         = 1
-	maxLimitValue         = 100
-	defaultOffsetValue    = 0
-	defaultLimitValue     = 10
-	offsetParamName       = "offset"
-	limitParamName        = "limit"
-	categoryNameParamName = "category_name"
+	minLimitValue          = 1
+	maxLimitValue          = 100
+	defaultOffsetValue     = 0
+	defaultLimitValue      = 10
+	offsetParamName        = "offset"
+	limitParamName         = "limit"
+	categoryNameParamName  = "category_name"
 	priceLessThanParamName = "price_less_than"
-	ErrInvalidParamValue  = "INVALID_PARAM_VALUE"
+	productCodeParamName   = "product_code"
+	ErrInvalidParamValue   = "INVALID_PARAM_VALUE"
 )
 
 type FilterBuilder interface {

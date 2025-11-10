@@ -6,6 +6,18 @@ type Category struct {
 	Name string `gorm:"not null"`
 }
 
+type CategoryDto struct {
+	Code string
+	Name string
+}
+
 func (c *Category) TableName() string {
 	return "categories"
+}
+
+func NewCategoryToCreate(code, name string) CategoryDto {
+	return CategoryDto{
+		Code: code,
+		Name: name,
+	}
 }

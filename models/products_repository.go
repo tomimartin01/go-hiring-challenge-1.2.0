@@ -7,6 +7,7 @@ import (
 
 type ProductsRepositoryInterface interface {
 	GetAllProducts(filters *filters.PaginationFilter, categoryFilters *filters.CategoryFilter, productFilters *filters.ProductFilter) ([]Product, int64, error)
+	GetProductDetails(productCode string) (Product, error)
 }
 
 type ProductsRepository struct {
@@ -24,7 +25,6 @@ func (r *ProductsRepository) GetAllProducts(pageFilters *filters.PaginationFilte
 	var total int64
 
 	query := r.db.Model(&Product{})
-
 	if productFilters.PriceLessThan != nil {
 		query = query.Where("products.price <= ?", productFilters.PriceLessThan)
 	}
@@ -48,4 +48,18 @@ func (r *ProductsRepository) GetAllProducts(pageFilters *filters.PaginationFilte
 		return nil, 0, err
 	}
 	return products, total, nil
+}
+
+func (r *ProductsRepository) GetProductDetails(productCode string) (Product, error) {
+	var product Product
+	if err := r.db.Model(&Product{}).
+		Where("products.code = ?", productCode).
+		Preload("Variants").
+		Preload("Categories").
+		Joins("JOIN product_categories ON products.id = product_categories.product_id").
+		Joins("JOIN categories ON product_categories.category_id = categories.id").
+		First(&product).Error; err != nil {
+		return Product{}, err
+	}
+	return product, nil
 }

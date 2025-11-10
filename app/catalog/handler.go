@@ -2,6 +2,7 @@ package catalog
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/mytheresa/go-hiring-challenge/app/filters"
@@ -22,6 +23,23 @@ type Product struct {
 	Code       string     `json:"code"`
 	Categories []Category `json:"categories"`
 	Price      float64    `json:"price"`
+}
+
+type ProductDetails struct {
+	Code       string     `json:"code"`
+	Categories []Category `json:"categories"`
+	Price      float64    `json:"price"`
+	Variants   []Variant  `json:"variants"`
+}
+
+type Variant struct {
+	Code  string  `json:"code"`
+	Name  string  `json:"name"`
+	Price float64 `json:"price"`
+}
+
+type ProductDetailsResponse struct {
+	Product ProductDetails `json:"product"`
 }
 
 type CatalogHandler struct {
@@ -87,4 +105,59 @@ func (h *CatalogHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+}
+
+func (h *CatalogHandler) HandleGetProductDetails(w http.ResponseWriter, r *http.Request) {
+	productCode := r.PathValue("code")
+	if productCode == "" {
+		http.Error(w, "Product code is required", http.StatusBadRequest)
+		return
+	}
+
+	product, err := h.repo.GetProductDetails(productCode)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	variants := make([]Variant, len(product.Variants))
+	for i, variant := range product.Variants {
+		variants[i] = Variant{
+			Code: variant.SKU,
+			Name: variant.Name,
+			Price: product.Price.InexactFloat64(),
+		}
+		// We need to inherit the price from the product
+		if variant.Price.IsZero() {
+			variants[i].Price = product.Price.InexactFloat64()
+		}
+	}
+	categories := make([]Category, len(product.Categories))
+	for i, category := range product.Categories {
+		categories[i] = Category{
+			Code: category.Code,
+			Name: category.Name,
+		}
+	}
+	productDetails := ProductDetails{
+		Code:       product.Code,
+		Categories: categories,
+		Price:      product.Price.InexactFloat64(),
+		Variants:   variants,
+	}
+
+	response := ProductDetailsResponse{
+		Product: productDetails,
+	}
+
+	// Return the products as a JSON response
+	w.Header().Set("Content-Type", "application/json")
+
+	fmt.Println(product)
+
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 }
