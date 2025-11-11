@@ -17,3 +17,7 @@ type Product struct {
 func (p *Product) TableName() string {
 	return "products"
 }
+
+const (
+	ProductNotFoundError = "PRODUCT_NOT_FOUND"
+)

@@ -1,6 +1,7 @@
 package catalog
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/mytheresa/go-hiring-challenge/app/api"
@@ -58,26 +59,30 @@ func NewCatalogHandler(r models.ProductsRepositoryInterface) *CatalogHandler {
 func (h *CatalogHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
 	pageFilters := &filters.PaginationFilter{}
 	if err := pageFilters.Parse(r.URL.Query()); err != nil {
-		api.ErrorResponse(w, http.StatusBadRequest, err.Error())
+		log.Printf("Error parsing page filters: %v", err.Error())
+		api.ErrorResponse(w, http.StatusBadRequest, api.InvalidParamValueError)
 		return
 
 	}
 
 	categoryFilters := &filters.CategoryFilter{}
 	if err := categoryFilters.Parse(r.URL.Query()); err != nil {
-		api.ErrorResponse(w, http.StatusBadRequest, err.Error())
+		log.Printf("Error parsing category filters: %v", err.Error())
+		api.ErrorResponse(w, http.StatusBadRequest, api.InvalidParamValueError)
 		return
 	}
 
 	productFilters := &filters.ProductFilter{}
 	if err := productFilters.Parse(r.URL.Query()); err != nil {
-		api.ErrorResponse(w, http.StatusBadRequest, err.Error())
+		log.Printf("Error parsing product filters: %v", err.Error())
+		api.ErrorResponse(w, http.StatusBadRequest, api.InvalidParamValueError)
 		return
 	}
 
 	res, total, err := h.repo.GetAllProducts(pageFilters, categoryFilters, productFilters)
 	if err != nil {
-		api.ErrorResponse(w, http.StatusInternalServerError, err.Error())
+		log.Printf("Error getting all products: %v", err.Error())
+		api.ErrorResponse(w, http.StatusInternalServerError, api.InternalServerError)
 		return
 	}
 
@@ -92,13 +97,21 @@ func (h *CatalogHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
 func (h *CatalogHandler) HandleGetProductDetails(w http.ResponseWriter, r *http.Request) {
 	productCode := r.PathValue(prodCodeSubPath)
 	if productCode == "" {
-		api.ErrorResponse(w, http.StatusBadRequest, "Product code is required")
+		log.Printf("Product code is required")
+		api.ErrorResponse(w, http.StatusBadRequest, api.BadRequestError)
 		return
 	}
 
 	product, err := h.repo.GetProductDetails(productCode)
 	if err != nil {
-		api.ErrorResponse(w, http.StatusInternalServerError, err.Error())
+		if err.Error() == models.ProductNotFoundError {
+			log.Printf("Product not found: %v", err.Error())
+			api.ErrorResponse(w, http.StatusNotFound, api.NotFoundError)
+			return
+		}
+
+		log.Printf("Error getting product details: %v", err.Error())
+		api.ErrorResponse(w, http.StatusInternalServerError, api.InternalServerError)
 		return
 	}
 
@@ -134,7 +147,7 @@ func mapToProductDetails(product models.Product) ProductDetails {
 		variants[i] = Variant{
 			Code:  variant.SKU,
 			Name:  variant.Name,
-			Price: product.Price.InexactFloat64(),
+			Price: variant.Price.InexactFloat64(),
 		}
 		// We need to inherit the price from the product
 		if variant.Price.IsZero() {

@@ -1,6 +1,8 @@
 package models
 
 import (
+	"errors"
+
 	"github.com/mytheresa/go-hiring-challenge/app/filters"
 	"gorm.io/gorm"
 )
@@ -53,14 +55,20 @@ func (r *ProductsRepository) GetAllProducts(pageFilters *filters.PaginationFilte
 
 func (r *ProductsRepository) GetProductDetails(productCode string) (Product, error) {
 	var product Product
-	if err := r.db.Model(&Product{}).
+	result := r.db.Model(&Product{}).
 		Where("products.code = ?", productCode).
 		Preload("Variants").
 		Preload("Categories").
 		Joins("JOIN product_categories ON products.id = product_categories.product_id").
 		Joins("JOIN categories ON product_categories.category_id = categories.id").
-		First(&product).Error; err != nil {
-		return Product{}, err
+		First(&product)
+
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return Product{}, errors.New(ProductNotFoundError)
+		}
+		return Product{}, result.Error
 	}
+
 	return product, nil
 }

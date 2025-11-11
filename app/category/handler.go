@@ -2,6 +2,7 @@ package category
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/mytheresa/go-hiring-challenge/app/api"
@@ -33,14 +34,16 @@ func (h CategoryHandler) HandleCreate(w http.ResponseWriter, r *http.Request) {
 	var req CreateRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		api.ErrorResponse(w, http.StatusBadRequest, err.Error())
+		log.Printf("Error decoding request body: %v", err)
+		api.ErrorResponse(w, http.StatusBadRequest, api.BadRequestError)
 		return
 	}
 
 	categoryDto := models.NewCategoryToCreate(req.Code, req.Name)
 	newCategory, err := h.repo.Create(categoryDto)
 	if err != nil {
-		api.ErrorResponse(w, http.StatusInternalServerError, err.Error())
+		log.Printf("Error storing category: %v", err)
+		api.ErrorResponse(w, http.StatusInternalServerError, api.InternalServerError)
 		return
 	}
 
@@ -56,7 +59,8 @@ func (h CategoryHandler) HandleCreate(w http.ResponseWriter, r *http.Request) {
 func (h CategoryHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
 	res, err := h.repo.GetAllCategories()
 	if err != nil {
-		api.ErrorResponse(w, http.StatusInternalServerError, err.Error())
+		log.Printf("Error getting all categories: %v", err)
+		api.ErrorResponse(w, http.StatusInternalServerError, api.InternalServerError)
 		return
 	}
 
