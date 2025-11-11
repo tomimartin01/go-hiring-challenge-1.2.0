@@ -7,10 +7,23 @@ import (
 // Product represents a product in the catalog.
 // It includes a unique code and a price.
 type Product struct {
-	ID       uint            `gorm:"primaryKey"`
-	Code     string          `gorm:"uniqueIndex;not null"`
-	Price    decimal.Decimal `gorm:"type:decimal(10,2);not null"`
-	Variants []Variant       `gorm:"foreignKey:ProductID"`
+	ID         uint            `gorm:"primaryKey"`
+	Code       string          `gorm:"uniqueIndex;not null"`
+	Price      decimal.Decimal `gorm:"type:decimal(10,2);not null"`
+	Variants   []Variant       `gorm:"foreignKey:ProductID"`
+	Categories []Category      `gorm:"many2many:product_categories;"`
+}
+
+const (
+	ProductNotFoundError = "PRODUCT_NOT_FOUND"
+)
+
+type ProductFilters struct {
+	PriceLessThan *decimal.Decimal
+	CategoryName  string
+	ProductName   string
+	Offset        int
+	Limit         int
 }
 
 func (p *Product) TableName() string {
