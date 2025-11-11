@@ -5,6 +5,7 @@ import (
 	"gorm.io/gorm"
 )
 
+//go:generate mockgen -source=products_repository.go -destination=mocks/products_repository_mock.go -package=models_mocks
 type ProductsRepositoryInterface interface {
 	GetAllProducts(filters *filters.PaginationFilter, categoryFilters *filters.CategoryFilter, productFilters *filters.ProductFilter) ([]Product, int64, error)
 	GetProductDetails(productCode string) (Product, error)

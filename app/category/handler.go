@@ -30,7 +30,6 @@ func NewCategoryHandler(r models.CategoriesRepositoryInterface) CategoryHandler 
 }
 
 func (h CategoryHandler) HandleCreate(w http.ResponseWriter, r *http.Request) {
-	_ = r.Context()
 	var req CreateRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
@@ -61,13 +60,16 @@ func (h CategoryHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	categories := make([]Category, len(res))
-	for i, category := range categories {
+	api.OKResponse(w, mapToCategories(res))
+}
+
+func mapToCategories(modelsCategories []models.Category) []Category {
+	categories := make([]Category, len(modelsCategories))
+	for i, category := range modelsCategories {
 		categories[i] = Category{
 			Code: category.Code,
 			Name: category.Name,
 		}
 	}
-
-	api.OKResponse(w, categories)
+	return categories
 }

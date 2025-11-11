@@ -4,6 +4,7 @@ import (
 	"gorm.io/gorm"
 )
 
+//go:generate mockgen -source=categories_repository.go -destination=mocks/categories_repository_mock.go -package=models_mocks
 type CategoriesRepositoryInterface interface {
 	Create(dto CategoryDto) (Category, error)
 	GetAllCategories() ([]Category, error)
@@ -38,7 +39,7 @@ func (r CategoryRepository) GetAllCategories() ([]Category, error) {
 
 	if err := r.db.Model(&Category{}).
 		Find(&categories).Error; err != nil {
-		return nil, err
+		return categories, err
 	}
 
 	return categories, nil
