@@ -12,7 +12,6 @@ package models_mocks
 import (
 	reflect "reflect"
 
-	filters "github.com/mytheresa/go-hiring-challenge/app/filters"
 	models "github.com/mytheresa/go-hiring-challenge/models"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -42,9 +41,9 @@ func (m *MockProductsRepositoryInterface) EXPECT() *MockProductsRepositoryInterf
 }
 
 // GetAllProducts mocks base method.
-func (m *MockProductsRepositoryInterface) GetAllProducts(arg0 *filters.PaginationFilter, categoryFilters *filters.CategoryFilter, productFilters *filters.ProductFilter) ([]models.Product, int64, error) {
+func (m *MockProductsRepositoryInterface) GetAllProducts(filters models.ProductFilters) ([]models.Product, int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAllProducts", arg0, categoryFilters, productFilters)
+	ret := m.ctrl.Call(m, "GetAllProducts", filters)
 	ret0, _ := ret[0].([]models.Product)
 	ret1, _ := ret[1].(int64)
 	ret2, _ := ret[2].(error)
@@ -52,9 +51,9 @@ func (m *MockProductsRepositoryInterface) GetAllProducts(arg0 *filters.Paginatio
 }
 
 // GetAllProducts indicates an expected call of GetAllProducts.
-func (mr *MockProductsRepositoryInterfaceMockRecorder) GetAllProducts(arg0, categoryFilters, productFilters any) *gomock.Call {
+func (mr *MockProductsRepositoryInterfaceMockRecorder) GetAllProducts(filters any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllProducts", reflect.TypeOf((*MockProductsRepositoryInterface)(nil).GetAllProducts), arg0, categoryFilters, productFilters)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllProducts", reflect.TypeOf((*MockProductsRepositoryInterface)(nil).GetAllProducts), filters)
 }
 
 // GetProductDetails mocks base method.

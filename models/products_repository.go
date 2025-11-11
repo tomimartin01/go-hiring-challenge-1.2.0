@@ -3,13 +3,12 @@ package models
 import (
 	"errors"
 
-	"github.com/mytheresa/go-hiring-challenge/app/filters"
 	"gorm.io/gorm"
 )
 
 //go:generate mockgen -source=products_repository.go -destination=mocks/products_repository_mock.go -package=models_mocks
 type ProductsRepositoryInterface interface {
-	GetAllProducts(filters *filters.PaginationFilter, categoryFilters *filters.CategoryFilter, productFilters *filters.ProductFilter) ([]Product, int64, error)
+	GetAllProducts(filters ProductFilters) ([]Product, int64, error)
 	GetProductDetails(productCode string) (Product, error)
 }
 
@@ -23,20 +22,20 @@ func NewProductsRepository(db *gorm.DB) ProductsRepositoryInterface {
 	}
 }
 
-func (r *ProductsRepository) GetAllProducts(pageFilters *filters.PaginationFilter, categoryFilters *filters.CategoryFilter, productFilters *filters.ProductFilter) ([]Product, int64, error) {
+func (r *ProductsRepository) GetAllProducts(filters ProductFilters) ([]Product, int64, error) {
 	var products []Product
 	var total int64
 
 	query := r.db.Model(&Product{})
-	if productFilters.PriceLessThan != nil {
-		query = query.Where("products.price <= ?", productFilters.PriceLessThan)
+	if filters.PriceLessThan != nil {
+		query = query.Where("products.price <= ?", filters.PriceLessThan)
 	}
 
-	if categoryFilters.CategoryName != "" {
+	if filters.CategoryName != "" {
 		query = query.
 			Joins("JOIN product_categories ON products.id = product_categories.product_id").
 			Joins("JOIN categories ON product_categories.category_id = categories.id").
-			Where("categories.name = ?", categoryFilters.CategoryName)
+			Where("categories.name = ?", filters.CategoryName)
 	}
 
 	if err := query.Count(&total).Error; err != nil {
@@ -45,8 +44,8 @@ func (r *ProductsRepository) GetAllProducts(pageFilters *filters.PaginationFilte
 
 	if err := query.Preload("Variants").
 		Preload("Categories").
-		Offset(pageFilters.Offset).
-		Limit(pageFilters.Limit).
+		Offset(filters.Offset).
+		Limit(filters.Limit).
 		Find(&products).Error; err != nil {
 		return nil, 0, err
 	}

@@ -223,7 +223,7 @@ func TestCatalogHandler_HandleGet(t *testing.T) {
 		mockTotal := len(mockProducts)
 
 		mockRepo := repoMocks.NewMockProductsRepositoryInterface(ctl)
-		mockRepo.EXPECT().GetAllProducts(gomock.Any(), gomock.Any(), gomock.Any()).Return(mockProducts, int64(mockTotal), nil)
+		mockRepo.EXPECT().GetAllProducts(gomock.Any()).Return(mockProducts, int64(mockTotal), nil)
 		handler := NewCatalogHandler(mockRepo)
 		handlerFunc := http.HandlerFunc(handler.HandleGet)
 		recorder := httptest.NewRecorder()
@@ -250,7 +250,7 @@ func TestCatalogHandler_HandleGet(t *testing.T) {
 		defer ctl.Finish()
 
 		mockRepo := repoMocks.NewMockProductsRepositoryInterface(ctl)
-		mockRepo.EXPECT().GetAllProducts(gomock.Any(), gomock.Any(), gomock.Any()).Return([]models.Product{}, int64(0), errors.New("error"))
+		mockRepo.EXPECT().GetAllProducts(gomock.Any()).Return([]models.Product{}, int64(0), errors.New("error"))
 		handler := NewCatalogHandler(mockRepo)
 		handlerFunc := http.HandlerFunc(handler.HandleGet)
 		recorder := httptest.NewRecorder()

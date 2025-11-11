@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/mytheresa/go-hiring-challenge/app/api"
-	"github.com/mytheresa/go-hiring-challenge/app/filters"
+	"github.com/mytheresa/go-hiring-challenge/app/api/filters"
 	"github.com/mytheresa/go-hiring-challenge/models"
 )
 
@@ -79,7 +79,13 @@ func (h *CatalogHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, total, err := h.repo.GetAllProducts(pageFilters, categoryFilters, productFilters)
+	searchFilters := models.ProductFilters{
+		PriceLessThan: productFilters.PriceLessThan,
+		CategoryName:  categoryFilters.CategoryName,
+		Offset:        pageFilters.Offset,
+		Limit:         pageFilters.Limit,
+	}
+	res, total, err := h.repo.GetAllProducts(searchFilters)
 	if err != nil {
 		log.Printf("Error getting all products: %v", err.Error())
 		api.ErrorResponse(w, http.StatusInternalServerError, api.InternalServerError)

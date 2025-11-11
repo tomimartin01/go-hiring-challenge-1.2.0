@@ -71,6 +71,7 @@ func mapToCategories(modelsCategories []models.Category) []Category {
 	categories := make([]Category, len(modelsCategories))
 	for i, category := range modelsCategories {
 		categories[i] = Category{
+			ID:   category.ID,
 			Code: category.Code,
 			Name: category.Name,
 		}

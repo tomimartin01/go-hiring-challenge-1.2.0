@@ -14,10 +14,18 @@ type Product struct {
 	Categories []Category      `gorm:"many2many:product_categories;"`
 }
 
-func (p *Product) TableName() string {
-	return "products"
-}
-
 const (
 	ProductNotFoundError = "PRODUCT_NOT_FOUND"
 )
+
+type ProductFilters struct {
+	PriceLessThan *decimal.Decimal
+	CategoryName  string
+	ProductName   string
+	Offset        int
+	Limit         int
+}
+
+func (p *Product) TableName() string {
+	return "products"
+}
